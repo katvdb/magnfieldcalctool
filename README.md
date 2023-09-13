@@ -19,21 +19,24 @@ Volg deze stappen om de benodigde software en extensies in te stellen voor dit p
 ## 3. Open JupyterLab
 
 - Start JupyterLab door het volgende commando in de terminal uit te voeren:
+  ```sh
   jupyter lab
 
 ## 4. Installeer benodigde Python-extensies
 
-- Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anaconda-omgeving van je JupyterLab-project:
+Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anaconda-omgeving van je JupyterLab-project:
 
-    Pandas
-    PySimpleGUI
-    NumPy
+- Pandas
+- PySimpleGUI
+- NumPy
 
 Om deze extensies te installeren, kun je de volgende commando's uitvoeren in een JupyterLab-codecel of in een terminal binnen je Anaconda-omgeving:
 
+```shell
 pip install pandas
 pip install pysimplegui
 pip install numpy
+
 
 
 
