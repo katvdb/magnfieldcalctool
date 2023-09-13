@@ -31,13 +31,12 @@ Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anacon
 - PySimpleGUI
 - NumPy
 
-Om deze extensies te installeren, kun je de volgende commando's uitvoeren in een JupyterLab-codecel of in een terminal binnen je Anaconda-omgeving:
+  Om deze extensies te installeren, kun je de volgende commando's uitvoeren in een JupyterLab-codecel of in een terminal binnen     je Anaconda-omgeving:
 
-```sh
-
-pip install pandas
-pip install pysimplegui
-pip install numpy
+  ```sh
+  pip install pandas
+  pip install pysimplegui
+  pip install numpy
 
 ## Aan de slag
 
