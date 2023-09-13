@@ -39,7 +39,9 @@ pip install pandas
 pip install pysimplegui
 pip install numpy
 
-## 5. README
+## Aan de slag
+
+Nu je de omgeving hebt ingesteld, kun je aan de slag met het berekenen van magnetische velden bij lage frequenties met behulp van deze rekentool.
 
 In deze README staan de instructies in een gestructureerde vorm met koppelingen naar de downloadpagina's van Anaconda en met duidelijke stappen voor het installeren van JupyterLab en de vereiste Python-extensies. Pas deze README aan aan je eigen projectindeling en behoeften.
 
