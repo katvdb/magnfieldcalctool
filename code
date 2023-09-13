@@ -1,0 +1,324 @@
+import PySimpleGUI as sg
+import tkinter as tk
+from tkinter import ttk
+import numpy as np
+import webbrowser
+
+sg.theme('LightGreen2')
+
+transformer_choices = ["Oil-immersed", "Dry", "Cast resin"]
+
+heading_font = ('Helvetica', 12, 'bold')
+text_font = ('Helvetica', 10)
+
+layout = [
+    [sg.Text('Select a Transformer Type:', font=heading_font)],
+    [sg.Combo(transformer_choices, size=(20, 1), key='transformer')],
+    [sg.Text('_' * 50)],
+    [sg.Text('Traction Transformer', font=heading_font)],
+    [sg.Text('Number:'), sg.InputText(size=(10, 1)), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1))],
+    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1)), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    [sg.Text('Distribution Transformer', font=heading_font)],
+    [sg.Text('Number:'), sg.InputText(size=(10, 1)), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1))],
+    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1)), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    [sg.Text('Busbar', font=heading_font)],
+    [sg.Text('Length [m]'), sg.InputText(size=(10, 1)), sg.Text('Distance in between de bars [m]'), sg.InputText(size=(10, 1))],
+    [sg.Text('Start', font=text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    [sg.Text('Coordinates to Measure Field', font=heading_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    [sg.Text('AC Wires', font=heading_font)],
+    [sg.Text('Start', font = text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('End', font=text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    [sg.Text('DC Wires', font=heading_font)],
+    [sg.Text('Start', font = text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('End', font=text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('_' * 50)],
+    #[sg.Text('Shielding Material', font=heading_font)],
+    #[sg.Text('Permeability:'), sg.InputText(size=(10, 1))],
+    #[sg.Text('Thickness:'), sg.InputText(size=(10, 1))],
+    #[sg.Text('Box Length:'), sg.InputText(size=(10, 1))],
+    #[sg.Text('_' * 50)],
+    [sg.Button('Ok'), sg.Button('Cancel')]
+]
+
+# Create the Window
+window = sg.Window('Calculate Magnetic Field @ Certain Distance', layout)
+
+
+
+import numpy as np
+import pandas as pd
+
+µ0 = 4* np.pi * 10**(-7)
+
+def distance(x, y, z, a, b, c):
+    d = np.sqrt((x - a)**2 + (y - b)**2 + (z - c)**2)
+    return d
+
+def B_transfo(num_distribution_transfo, num_traction_transfo, power_kVA_D, power_kVA_T, x, y, z):
+    # Constants
+    if selected_transformer == 'Cast resin':
+        B3 = 5  #µT
+        B10 = 0.15  # µT
+    else:
+        B3 = 5/3   #µT
+        B10 = 0.15/3  # µT
+    k_T = 1  # voor nullast
+    u_z = 6
+
+    
+    a = distance(x, y, z, 0, 0, 0)
+    
+    def get_exponent(a):
+        decimal_part = a - int(a)
+        return 2 + decimal_part
+
+    def b(a):
+        if a < 1:
+            return B3 * (3 / a) ** get_exponent(a)
+        elif 1 <= a < 10:
+            return B3 * (3 / a) ** 2.8
+        else:
+            return B10 * (10 / a) ** 3
+
+    def B_D(a, power_kVA_D):
+        return u_z/6 * np.sqrt(power_kVA_D / 630) * b(a)
+    def B_T(a, power_kVA_T):
+        return u_z/6 * np.sqrt(power_kVA_T / 630) * b(a)
+    
+    B_total = 0.0
+    if power_kVA_D != '0':
+        B_total += B_D(a, power_kVA_D)*num_distribution_transfo
+    if power_kVA_T != '0':
+        B_total += B_T(a, power_kVA_T)*num_traction_transfo
+    return B_total 
+
+def B_busbars(x,y,z):
+    x = x
+    y_coo = y
+    y = [y_coo+distance_between_busbars_m, y_coo, y_coo-distance_between_busbars_m]
+    z = z
+    
+    if power_kVA_T == 0 and voltage_kV_HS_T == 0 and voltage_kV_LS_T == 0:
+        I_T_LS = 0
+        I_T_HS = 0
+    else:
+        I_T_LS = power_kVA_T / (np.sqrt(3) * voltage_kV_LS_T)
+        I_T_HS = power_kVA_T / (np.sqrt(3) * voltage_kV_HS_T)
+
+    if power_kVA_D == 0 and voltage_kV_HS_D == 0 and voltage_kV_LS_D == 0:
+        I_D_LS = 0
+        I_D_HS = 0
+    else:
+        I_D_LS = power_kVA_D / (np.sqrt(3) * voltage_kV_LS_D)
+        I_D_HS = power_kVA_D / (np.sqrt(3) * voltage_kV_HS_D)
+    
+
+
+    
+    A = []
+    C = []
+    for i in range(0, 3):
+        A.append((x/(x**2 + y[i]**2)) * (((length_busbars_m/2 + z) / np.sqrt(x**2 + y[i]**2 + (length_busbars_m/2 + z)**2)) + ((length_busbars_m/2 - z) / np.sqrt(x**2 + y[i]**2 + (length_busbars_m/2 - z)**2))))
+        C.append((-y[i]/(x**2 + y[i]**2)) * (((length_busbars_m/2 + z)/np.sqrt(x**2 + y[i]**2 + (length_busbars_m/2 + z)**2)) + ((length_busbars_m/2 - z) / np.sqrt(x**2 + y[i]**2 + (length_busbars_m/2 - z)**2))))
+
+    if A[0] != A[1] or A[0] != A[2]:
+        B_D_LS = I_D_LS/10 * np.sqrt((A[0] - A[1]/2 - A[2]/2)**2 + (C[0] - C[1]/2 - C[2]/2)**2 + (3/4*((A[1] - A[2])**2 + (C[1] - C[2])**2)))
+        B_T_LS = I_T_LS/10 * np.sqrt((A[0] - A[1]/2 - A[2]/2)**2 + (C[0] - C[1]/2 - C[2]/2)**2 + (3/4*((A[1] - A[2])**2 + (C[1] - C[2])**2)))
+        B_D_HS = I_D_HS/10 * np.sqrt((A[0] - A[1]/2 - A[2]/2)**2 + (C[0] - C[1]/2 - C[2]/2)**2 + (3/4*((A[1] - A[2])**2 + (C[1] - C[2])**2)))
+        B_T_HS = I_T_HS/10 * np.sqrt((A[0] - A[1]/2 - A[2]/2)**2 + (C[0] - C[1]/2 - C[2]/2)**2 + (3/4*((A[1] - A[2])**2 + (C[1] - C[2])**2)))
+        B_total = B_D_LS + B_T_LS + B_D_HS + B_T_HS
+    else:
+        B_D_LS = 0.0
+        B_T_LS = 0.0
+        B_D_HS = 0.0
+        B_T_HS = 0.0
+        B_total = 0.0
+
+    return B_total
+
+def B_rectifier(x, y, z):
+    
+    
+    if power_kVA_T == 0 and voltage_kV_HS_T == 0 and voltage_kV_LS_T == 0:
+        I_T_LS = 0
+        I_T_HS = 0
+    else:
+        I_T_LS = power_kVA_T / (np.sqrt(3) * voltage_kV_LS_T)
+        I_T_HS = power_kVA_T / (np.sqrt(3) * voltage_kV_HS_T)
+    
+    d = distance(x, y, z, 0, 0, 0)
+    
+    B_LS = np.abs(((µ0*I_T_LS)/(2*np.pi*d))*10)
+    B_HS = np.abs(((µ0*I_T_HS)/(2*np.pi*d))*10)
+    return B_LS + B_HS
+
+def B_ACconductors(x, y, z, x1, y1, z1, x2, y2, z2):
+    
+    if power_kVA_T == 0 and voltage_kV_HS_T == 0 and voltage_kV_LS_T == 0:
+        I_T = 0
+    else:
+        I_T = power_kVA_T / (np.sqrt(3) * voltage_kV_LS_T)
+        
+    if power_kVA_D == 0 and voltage_kV_HS_D == 0 and voltage_kV_LS_D == 0:
+        I_D = 0
+    else:
+        I_D = power_kVA_D / (np.sqrt(3) * voltage_kV_LS_D)
+    
+    Ia_D, Ib_D, Ic_D = I_D, I_D*np.exp(-(2*np.pi/3)*1j), I_D*np.exp((2*np.pi/3)*1j)
+    Ia_T, Ib_T, Ic_T = I_T, I_T*np.exp(-(2*np.pi/3)*1j), I_T*np.exp((2*np.pi/3)*1j)
+
+
+
+    def calculate_magnetic_field(I, x, y, z, x1, y1, z1, x2, y2, z2):
+        r1 = distance(x, y, z, x1, y1, z1)
+        r2 = distance(x, y, z, x2, y2, z2)
+
+        R = ((x1 - x2)**2 + (y1 - y2)**2)*z**2 + ((y1-y2)*x - (x1-x2)*y + (x1*y2 - x2*y1))**2
+        D1 = (x1**2 + y1**2) - (x1 - x2)*x - (y1 - y2)*y - (x1*x2 + y1*y2)
+        D2 = (x2**2 + y2**2) - (x2 - x1)*x - (y2 - y1)*y - (x1*x2 + y1*y2)
+
+        Bx = I/10*z*(y2 - y1)/(R) * (D1/r1 + D2/r2)
+        By = I/10*z*(x1 - x2)/(R) * (D1/r1 + D2/r2)
+        Bz = I/10*(x1*y2 - x2*y1 + x*y1 - x1*y + x2*y - x*y2)/(R) * (D1/r1 + D2/r2)
+
+        return Bx, By, Bz
+    # Calculate magnetic field for each phase
+    Bx_a_D, By_a_D, Bz_a_D = calculate_magnetic_field(Ia_D, x, y, z, x1, y1, z1, x2, y2, z2)
+    Bx_a_T, By_a_T, Bz_a_T = calculate_magnetic_field(Ia_T, x, y, z, x1, y1, z1, x2, y2, z2)
+    Bx_b_D, By_b_D, Bz_b_D = calculate_magnetic_field(Ib_D, x, y, z, x1, y1, z1, x2, y2, z2)
+    Bx_b_T, By_b_T, Bz_b_T = calculate_magnetic_field(Ib_T, x, y, z, x1, y1, z1, x2, y2, z2)
+    Bx_c_D, By_c_D, Bz_c_D = calculate_magnetic_field(Ic_D, x, y, z, x1, y1, z1, x2, y2, z2)
+    Bx_c_T, By_c_T, Bz_c_T = calculate_magnetic_field(Ic_T, x, y, z, x1, y1, z1, x2, y2, z2)
+
+    # Calculate the total magnetic field
+    Bx_total = (Bx_a_D + Bx_b_D + Bx_c_D + Bx_a_T + Bx_b_T + Bx_c_T)
+    By_total = (By_a_D + By_b_D + By_c_D + By_a_T + By_b_T + By_c_T)
+    Bz_total = (Bz_a_D + Bz_b_D + Bz_c_D + Bz_a_T + Bz_b_T + Bz_c_T)
+
+    Btot = np.abs(np.sqrt(Bx_total**2 + By_total**2 + Bz_total**2))
+    return Btot
+
+def B_DCconductors(x, y, z, x1, y1, z1, x2, y2, z2):
+    
+    if power_kVA_T == 0 and voltage_kV_HS_T == 0 and voltage_kV_LS_T == 0:
+        I_T = 0
+    else:
+        I_T = power_kVA_T / (np.sqrt(3) * voltage_kV_LS_T)
+    
+    if power_kVA_D == 0 and voltage_kV_HS_D == 0 and voltage_kV_LS_D == 0:
+        I_D = 0
+    else:
+        I_D = power_kVA_D / (np.sqrt(3) * voltage_kV_LS_D)
+    
+    r1 = distance(x, y, z, x1, y1, z1)
+    r2 = distance(x, y, z, x2, y2, z2)
+
+    R = ((x1 - x2)**2 + (y1 - y2)**2)*z**2 + ((y1-y2)*x - (x1-x2)*y + (x1*y2 - x2*y1))**2
+    D1 = (x1**2 + y1**2) - (x1 - x2)*x - (y1 - y2)*y - (x1*x2 + y1*y2)
+    D2 = (x2**2 + y2**2) - (x2 - x1)*x - (y2 - y1)*y - (x1*x2 + y1*y2)
+
+    Bx = µ0*3*I_T*num_traction_transformers*10*z*(y2 - y1)/(4*np.pi*R) * (D1/r1 + D2/r2)
+    By = µ0*3*I_T*num_traction_transformers*10*z*(x1 - x2)/(4*np.pi*R) * (D1/r1 + D2/r2)
+    Bz = µ0*3*I_T*num_traction_transformers*10*(x1*y2 - x2*y1 + x*y1 - x1*y + x2*y - x*y2)/(4*np.pi*R) * (D1/r1 + D2/r2)
+    
+    Btot = np.abs(np.sqrt(Bx**2 + By**2 + Bz**2))
+    
+    return Btot
+
+
+while True:
+    event, values = window.read()
+    if event == sg.WIN_CLOSED or event == 'Cancel':
+        break
+    selected_transformer = values['transformer']
+    print("Selected Transformer Type:", selected_transformer)
+    num_traction_transformers = int(values[0])
+    num_distribution_transformers = int(values[4])
+    power_kVA_T = float(values[1])
+    power_kVA_D = float(values[5])
+    voltage_kV_HS_T = float(values[2])
+    voltage_kV_HS_D = float(values[6])
+    voltage_kV_LS_T = float(values[3])
+    voltage_kV_LS_D = float(values[7])
+    length_busbars_m = float(values[8])
+    distance_between_busbars_m = float(values[9])
+    x5, y5, z5 = float(values[10]), float(values[11]), float(values[12])
+    x, y, z = float(values[13]), float(values[14]), float(values[15])
+    x1, y1, z1 = float(values[16]), float(values[17]), float(values[18])
+    x2, y2, z2 = float(values[19]), float(values[20]), float(values[21])
+    x3, y3, z3 = float(values[22]), float(values[23]), float(values[24])
+    x4, y4, z4 = float(values[25]), float(values[26]), float(values[27])
+    #mu = float(values[28])
+    #d = float(values[29])
+    #a = float(values[30])
+    distance_m = np.sqrt(x**2 + y**2 + z**2)
+    
+    
+    mag_field_transfo = B_transfo(num_distribution_transformers, num_traction_transformers, power_kVA_D, power_kVA_T, x, y, z)
+    mag_field_busbars = B_busbars(x5, y5, z5)
+    mag_field_rectifier = B_rectifier(x, y, z)
+    mag_field_ACwire = B_ACconductors(x, y, z, x1, y1, z1, x2, y2, z2)
+    mag_field_DCwire = B_DCconductors(x, y, z, x3, y3, z3, x4, y4, z4)
+    mag_field = mag_field_transfo + mag_field_busbars + mag_field_rectifier + mag_field_ACwire + mag_field_DCwire
+    
+    #def B_shielding(mu, d, a, mag_field): 
+        #S = 1+ 4/5 * (mu* d/a)
+        #return mag_field/S
+    
+    #mag_field_shielded = B_shielding(mu, distance_m, a, mag_field)
+    
+    if num_traction_transformers != 0:
+        pdf_link = 'https://swecogroup-my.sharepoint.com/personal/mark_libbrecht_swecobelgium_be/_layouts/15/onedrive.aspx?FolderCTID=0x012000FF6ECFC9A0CED54D94F5668DA896A750&id=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn%2FKort%20Overzicht%20%2D%20Tractietransformatoren%2Epdf&parent=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn'
+        message = 'ATTENTION\n\nTraction transformers are part of your system! At certain moments in time a higher current than the nominal current can be expected. Watch out for the specific duty pattern!'
+        choice = sg.popup_yes_no(f"{message}\n\n Press Yes to get more info", title='Traction transformators')
+        if choice == 'Yes':
+            webbrowser.open(pdf_link)
+            
+    if mag_field < 0.4:
+        message = "The magnetic field has the value of {mag_field}. This means the design of the room is correct and will not evoke any problems when looking at health of humans or EMI."
+        sg.popup(f"{message}\n\n", title = "Magnetic field")
+        sg.popup(f'The total magnetic field is {mag_field}')
+            
+    if mag_field > 3.5:
+        pdf_link = 'https://swecogroup-my.sharepoint.com/personal/mark_libbrecht_swecobelgium_be/_layouts/15/onedrive.aspx?login_hint=katrijn%2Evandenborne%40swecobelgium%2Ebe&FolderCTID=0x012000FF6ECFC9A0CED54D94F5668DA896A750&id=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn%2FPraktische%20Richtlijnen%20EMC%2Epdf&parent=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn'
+        message = 'ATTENTION\n\nThe magnetic field is higher than 3.5 µT. Are you working with electrical equipment at this distance from the station?.'
+        choice = sg.popup_yes_no(f'{message}\n\n', title='Watch out for your electrical devices')
+        if choice == 'Yes':
+            choice2 = sg.popup_yes_no(f'More info about EMI and the safety of long exposure for humans? Read Chapter 3 in this document.\n\n', title = 'Would you like more information on what do to?')
+        if choice == 'No':
+            sg.popup(f'The total magnetic field is {mag_field}')
+            continue
+        if choice2 == 'Yes':
+            webbrowser.open(pdf_link)
+        if choice2 == 'No':
+            continue            
+            
+    if mag_field < 3.5:
+        sg.popup(f'No worries! This design is safe for electrical interference but it might not be for long exposure of humans!')
+        sg.popup(f'The total magnetic field is {mag_field}')
+        
+    if mag_field > 0.4:
+        pdf_link = 'https://swecogroup-my.sharepoint.com/personal/mark_libbrecht_swecobelgium_be/_layouts/15/onedrive.aspx?login_hint=katrijn%2Evandenborne%40swecobelgium%2Ebe&FolderCTID=0x012000FF6ECFC9A0CED54D94F5668DA896A750&id=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn%2FPraktische%20Richtlijnen%20EMC%2Epdf&parent=%2Fpersonal%2Fmark%5Flibbrecht%5Fswecobelgium%5Fbe%2FDocuments%2FStage%5FKatrijn%2FKatrijn'
+        choice3 = sg.popup_yes_no(f'Watch out, this design is NOT safe for a long exposure to humans (mostly kids), be aware\n\nWould you like some more information? Read Chapter 3 in this document.', title= 'Not safe for humans')
+        if choice3 == 'Yes':
+            webbrowser.open(pdf_link)
+        else:
+            sg.popup(f'The total magnetic field is {mag_field}')
+            continue
+            
+
+    # Moved outside the event loop
+print('Total Magnetic Field = ', mag_field, 'µT')
+#print('Total Magnetic Field shielded = ', mag_field_shielded, 'µT')
+window.close()
