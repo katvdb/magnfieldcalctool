@@ -27,16 +27,16 @@ Volg deze stappen om de benodigde software en extensies in te stellen voor dit p
 
 Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anaconda-omgeving van je JupyterLab-project:
 
-- Pandas
 - PySimpleGUI
 - NumPy
+- Webbrowser
 
+  De webbrowser library is een standard Python library, dus moet je deze niet apart installeren.
   Om deze extensies te installeren, kun je de volgende commando's uitvoeren in een JupyterLab-codecel of in een terminal binnen     je Anaconda-omgeving:
 
   ```sh
   pip install pysimplegui
   pip install numpy
-  pip install webbrowser 
 
 ## Aan de slag
 
