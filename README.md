@@ -39,8 +39,7 @@ pip install pandas
 pip install pysimplegui
 pip install numpy
 
-
-
+## 5. README
 
 In deze README staan de instructies in een gestructureerde vorm met koppelingen naar de downloadpagina's van Anaconda en met duidelijke stappen voor het installeren van JupyterLab en de vereiste Python-extensies. Pas deze README aan aan je eigen projectindeling en behoeften.
 
