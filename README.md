@@ -29,6 +29,7 @@ Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anacon
 
 - PySimpleGUI
 - NumPy
+- Pandas
 - Webbrowser
 
   De webbrowser library is een standard Python library, dus moet je deze niet apart installeren.
@@ -37,6 +38,7 @@ Zorg ervoor dat de volgende Python-bibliotheken zijn geïnstalleerd in de Anacon
   ```sh
   pip install pysimplegui
   pip install numpy
+  pip install pandas
 
 ## Aan de slag
 
