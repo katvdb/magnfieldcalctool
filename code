@@ -5,44 +5,51 @@ import numpy as np
 import webbrowser
 
 sg.theme('LightGreen2')
-
 transformer_choices = ["Oil-immersed", "Dry", "Cast resin"]
-
 heading_font = ('Helvetica', 12, 'bold')
 text_font = ('Helvetica', 10)
 
-layout = [
+col1 = [
+    [sg.Text('Distribution Transformer', font=heading_font)],
+    [sg.Text('Number:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('_' * 50)],
+    [sg.Text('Busbar', font=heading_font)],
+    [sg.Text('Length [m]'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Distance in between de bars [m]'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('Start', font=text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('_' * 50)],
+    [sg.Text('Coordinates to Measure Field', font=heading_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('_' * 50)],
+    [sg.Text('AC Wires', font=heading_font)],
+    [sg.Text('Start', font = text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('End', font=text_font)],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
+    [sg.Text('_' * 50)],
+]
+
+col2=[
     [sg.Text('Select a Transformer Type:', font=heading_font)],
     [sg.Combo(transformer_choices, size=(20, 1), key='transformer')],
     [sg.Text('_' * 50)],
     [sg.Text('Traction Transformer', font=heading_font)],
-    [sg.Text('Number:'), sg.InputText(size=(10, 1)), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1))],
-    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1)), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1))],
+    [sg.Text('Number:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1),default_text='0')],
+    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1),default_text='0')],
     [sg.Text('_' * 50)],
-    [sg.Text('Distribution Transformer', font=heading_font)],
-    [sg.Text('Number:'), sg.InputText(size=(10, 1)), sg.Text('Power [kVA]'), sg.InputText(size=(10, 1))],
-    [sg.Text('Voltage HS [kV]'), sg.InputText(size=(10, 1)), sg.Text('Voltage LS [kV]'), sg.InputText(size=(10, 1))],
-    [sg.Text('_' * 50)],
-    [sg.Text('Busbar', font=heading_font)],
-    [sg.Text('Length [m]'), sg.InputText(size=(10, 1)), sg.Text('Distance in between de bars [m]'), sg.InputText(size=(10, 1))],
-    [sg.Text('Start', font=text_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
-    [sg.Text('_' * 50)],
-    [sg.Text('Coordinates to Measure Field', font=heading_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
-    [sg.Text('_' * 50)],
-    [sg.Text('AC Wires', font=heading_font)],
+       [sg.Text('DC Wires', font=heading_font)],
     [sg.Text('Start', font = text_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
     [sg.Text('End', font=text_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
+    [sg.Text('X:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Y:'), sg.InputText(size=(10, 1), default_text='0'), sg.Text('Z:'), sg.InputText(size=(10, 1), default_text='0')],
     [sg.Text('_' * 50)],
-    [sg.Text('DC Wires', font=heading_font)],
-    [sg.Text('Start', font = text_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
-    [sg.Text('End', font=text_font)],
-    [sg.Text('X:'), sg.InputText(size=(10, 1)), sg.Text('Y:'), sg.InputText(size=(10, 1)), sg.Text('Z:'), sg.InputText(size=(10, 1))],
-    [sg.Text('_' * 50)],
+]
+
+layout = [
+    
+    [sg.Column(col1, element_justification='c' ), sg.Column(col2, element_justification='c')]  ,
+ 
     #[sg.Text('Shielding Material', font=heading_font)],
     #[sg.Text('Permeability:'), sg.InputText(size=(10, 1))],
     #[sg.Text('Thickness:'), sg.InputText(size=(10, 1))],
